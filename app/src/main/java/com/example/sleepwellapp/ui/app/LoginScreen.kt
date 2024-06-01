@@ -1,6 +1,5 @@
 package com.example.sleepwellapp.ui.app
 
-import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -20,8 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.sleepwellapp.datalayer.UserPreferences
-import com.example.sleepwellapp.datalayer.CryptoManager
 import com.example.sleepwellapp.datalayer.MainViewModel
 import kotlinx.coroutines.launch
 
