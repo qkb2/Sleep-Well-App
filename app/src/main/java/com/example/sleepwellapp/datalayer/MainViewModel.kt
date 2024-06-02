@@ -14,10 +14,12 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Calendar
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val db = Room.databaseBuilder(application, AppDatabase::class.java, "app-db").build()
     private val dayTimeDao = db.dayTimeDao()
+    private val motionCountDao = db.motionCountDao()
 
     private val _dayTimes = MutableStateFlow<List<DayTimeEntity>>(emptyList())
     val dayTimes: StateFlow<List<DayTimeEntity>> = _dayTimes
@@ -112,6 +114,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             userPreferences.clearAllData()
             withContext(Dispatchers.IO) { dayTimeDao.deleteAll() }
             _dayTimes.value = emptyList()
+        }
+    }
+
+
+    fun recordMotion(day: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val lastCount = motionCountDao.getLastCountForDay(day)
+            if (lastCount != null) {
+                motionCountDao.updateCount(lastCount.id, lastCount.count + 1)
+            } else {
+                motionCountDao.insert(MotionCount(day = day, count = 1))
+            }
+        }
+    }
+
+    fun resetMotionCount(day: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            motionCountDao.insert(MotionCount(day = day, count = 0))
+        }
+    }
+
+    private fun cleanOldData() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.DAY_OF_YEAR, -7)
+            val cutoffDate = calendar.time
+            motionCountDao.deleteOldData(cutoffDate.time)
         }
     }
 }
