@@ -1,5 +1,6 @@
 [versions]
 agp = "8.3.2"
+animation = "1.6.7"
 datastore = "1.1.1"
 kotlin = "1.9.24"
 coreKtx = "1.13.1"
@@ -20,6 +21,7 @@ datastorePreferencesCoreJvm = "1.1.1"
 navigationCompose = "2.7.7"
 
 [libraries]
+androidx-animation = { module = "androidx.compose.animation:animation", version.ref = "animation" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "datastore" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }

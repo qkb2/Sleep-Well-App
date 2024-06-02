@@ -62,6 +62,7 @@ fun DayTimeItem(dayTime: DayTimeEntity, viewModel: MainViewModel) {
             LocalTime.parse(dayTime.wakeUpTime).minute,
             true
         ).show()
+        showWakeUpDialog = false
     }
 
     if (showSleepDialog) {
@@ -76,6 +77,7 @@ fun DayTimeItem(dayTime: DayTimeEntity, viewModel: MainViewModel) {
             LocalTime.parse(dayTime.sleepTime).minute,
             true
         ).show()
+        showSleepDialog = false
     }
 
     Column(

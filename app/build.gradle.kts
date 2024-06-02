@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 //    implementation(libs.androidx.material)
+    implementation(libs.androidx.animation)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.datastore.preferences)
