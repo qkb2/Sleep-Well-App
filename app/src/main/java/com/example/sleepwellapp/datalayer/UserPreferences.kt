@@ -15,7 +15,7 @@ class UserPreferences(context: Context, private val cryptoManager: CryptoManager
 
     companion object {
         val USERNAME_KEY = stringPreferencesKey("username")
-        val PASSWORD_KEY = stringPreferencesKey("password")
+        val UID_KEY = stringPreferencesKey("password")
         val DARK_MODE_KEY = booleanPreferencesKey("dark_mode")
     }
 
@@ -26,7 +26,7 @@ class UserPreferences(context: Context, private val cryptoManager: CryptoManager
 
     val passwordFlow: Flow<String?> = dataStore.data
         .map { preferences ->
-            preferences[PASSWORD_KEY]?.let { decryptString(it) }
+            preferences[UID_KEY]?.let { decryptString(it) }
         }
 
     val darkModeFlow: Flow<Boolean> = dataStore.data
@@ -40,19 +40,19 @@ class UserPreferences(context: Context, private val cryptoManager: CryptoManager
         }
     }
 
-    suspend fun saveCredentials(username: String, password: String) {
+    suspend fun saveCredentials(username: String, uid: String) {
         val encryptedUsername = encryptString(username)
-        val encryptedPassword = encryptString(password)
+        val encryptedUID = encryptString(uid)
         dataStore.edit { preferences ->
             preferences[USERNAME_KEY] = encryptedUsername
-            preferences[PASSWORD_KEY] = encryptedPassword
+            preferences[UID_KEY] = encryptedUID
         }
     }
 
     suspend fun clearCredentials() {
         dataStore.edit { preferences ->
             preferences.remove(USERNAME_KEY)
-            preferences.remove(PASSWORD_KEY)
+            preferences.remove(UID_KEY)
         }
     }
 
