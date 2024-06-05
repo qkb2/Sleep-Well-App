@@ -15,33 +15,34 @@ import androidx.room.Update
 import java.util.Date
 
 @Entity(tableName = "day_times")
-data class DayTimeEntity(
+data class NightTimeEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val day: String,
-    val wakeUpTime: String,
+    val startDay: String,
+    val endDay: String,
     val sleepTime: String,
-    val enforced: Boolean = false
+    val wakeUpTime: String,
+    val enabled: Boolean
 )
 
 @Dao
-interface DayTimeDao {
+interface NightTimeDao {
     @Query("SELECT * FROM day_times")
-    fun getAll(): List<DayTimeEntity>
+    fun getAll(): List<NightTimeEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(dayTime: DayTimeEntity)
+    fun insert(dayTime: NightTimeEntity)
 
     @Update
-    fun update(dayTime: DayTimeEntity)
+    fun update(dayTime: NightTimeEntity)
 
     @Delete
-    fun delete(dayTime: DayTimeEntity)
+    fun delete(dayTime: NightTimeEntity)
 
     @Query("DELETE FROM day_times")
     fun deleteAll()
 
-    @Query("SELECT * FROM day_times WHERE day = :day LIMIT 1")
-    fun getByDay(day: String): DayTimeEntity?
+    @Query("SELECT * FROM day_times WHERE startDay = :day LIMIT 1")
+    fun getByStartDay(day: String): NightTimeEntity?
 }
 
 @Entity(tableName = "motion_count")
@@ -68,9 +69,9 @@ interface MotionCountDao {
 }
 
 
-@Database(entities = [DayTimeEntity::class, MotionCount::class], version = 1)
+@Database(entities = [NightTimeEntity::class, MotionCount::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun dayTimeDao(): DayTimeDao
+    abstract fun nightTimeDao(): NightTimeDao
     abstract fun motionCountDao(): MotionCountDao
 
     companion object {

@@ -19,6 +19,7 @@ workRuntimeKtx = "2.9.0"
 securityCryptoKtx = "1.0.0"
 datastorePreferencesCoreJvm = "1.1.1"
 navigationCompose = "2.7.7"
+lifecycleService = "2.8.1"
 
 [libraries]
 androidx-animation = { module = "androidx.compose.animation:animation", version.ref = "animation" }
@@ -49,6 +50,7 @@ androidx-security-crypto-ktx = { group = "androidx.security", name = "security-c
 androidx-datastore-preferences-core-jvm = { group = "androidx.datastore", name = "datastore-preferences-core-jvm", version.ref = "datastorePreferencesCoreJvm" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
+androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycleService" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

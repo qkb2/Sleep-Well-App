@@ -24,15 +24,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.sleepwellapp.datalayer.DayTimeEntity
 import com.example.sleepwellapp.datalayer.MainViewModel
+import com.example.sleepwellapp.datalayer.NightTimeEntity
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun TimeScreen(viewModel: MainViewModel, padding: PaddingValues) {
     Column(modifier = Modifier.padding(padding)) {
-        val dayTimes by viewModel.dayTimes.collectAsState()
+        val dayTimes by viewModel.nightTimes.collectAsState()
 
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(dayTimes) { dayTime ->
@@ -43,23 +43,23 @@ fun TimeScreen(viewModel: MainViewModel, padding: PaddingValues) {
 }
 
 @Composable
-fun DayTimeItem(dayTime: DayTimeEntity, viewModel: MainViewModel) {
+fun DayTimeItem(nightTimeEntity: NightTimeEntity, viewModel: MainViewModel) {
     val context = LocalContext.current
 
     var showWakeUpDialog by remember { mutableStateOf(false) }
     var showSleepDialog by remember { mutableStateOf(false) }
-    var enforced by remember { mutableStateOf(dayTime.enforced) }
+    var enforced by remember { mutableStateOf(nightTimeEntity.enabled) }
 
     if (showWakeUpDialog) {
         TimePickerDialog(
             context,
             { _, hourOfDay, minute ->
                 val newWakeUpTime = LocalTime.of(hourOfDay, minute).format(DateTimeFormatter.ofPattern("HH:mm"))
-                viewModel.updateDayTime(dayTime.copy(wakeUpTime = newWakeUpTime))
+                viewModel.updateNightTime(nightTimeEntity.copy(wakeUpTime = newWakeUpTime))
                 showWakeUpDialog = false
             },
-            LocalTime.parse(dayTime.wakeUpTime).hour,
-            LocalTime.parse(dayTime.wakeUpTime).minute,
+            LocalTime.parse(nightTimeEntity.wakeUpTime).hour,
+            LocalTime.parse(nightTimeEntity.wakeUpTime).minute,
             true
         ).show()
         showWakeUpDialog = false
@@ -70,11 +70,11 @@ fun DayTimeItem(dayTime: DayTimeEntity, viewModel: MainViewModel) {
             context,
             { _, hourOfDay, minute ->
                 val newSleepTime = LocalTime.of(hourOfDay, minute).format(DateTimeFormatter.ofPattern("HH:mm"))
-                viewModel.updateDayTime(dayTime.copy(sleepTime = newSleepTime))
+                viewModel.updateNightTime(nightTimeEntity.copy(sleepTime = newSleepTime))
                 showSleepDialog = false
             },
-            LocalTime.parse(dayTime.sleepTime).hour,
-            LocalTime.parse(dayTime.sleepTime).minute,
+            LocalTime.parse(nightTimeEntity.sleepTime).hour,
+            LocalTime.parse(nightTimeEntity.sleepTime).minute,
             true
         ).show()
         showSleepDialog = false
@@ -85,16 +85,16 @@ fun DayTimeItem(dayTime: DayTimeEntity, viewModel: MainViewModel) {
             .padding(16.dp)
             .fillMaxWidth()
     ) {
-        Text(text = dayTime.day, style = MaterialTheme.typography.titleMedium)
+        Text(text = nightTimeEntity.startDay + " to " + nightTimeEntity.endDay, style = MaterialTheme.typography.titleMedium)
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
             TextButton(onClick = { showWakeUpDialog = true }) {
-                Text(text = "Wake Up: ${formatTime(dayTime.wakeUpTime)}")
+                Text(text = "Wake Up: ${formatTime(nightTimeEntity.wakeUpTime)}")
             }
             TextButton(onClick = { showSleepDialog = true }) {
-                Text(text = "Sleep: ${formatTime(dayTime.sleepTime)}")
+                Text(text = "Sleep: ${formatTime(nightTimeEntity.sleepTime)}")
             }
         }
         Row(
@@ -104,7 +104,7 @@ fun DayTimeItem(dayTime: DayTimeEntity, viewModel: MainViewModel) {
                 checked = enforced,
                 onCheckedChange = {
                     enforced = it
-                    viewModel.updateDayTime(dayTime.copy(enforced = it))
+                    viewModel.updateNightTime(nightTimeEntity.copy(enabled = it))
                 }
             )
             Text(text = "Enforce Schedule")

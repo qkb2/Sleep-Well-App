@@ -1,31 +1,29 @@
 package com.example.sleepwellapp.datalayer
 
 import android.app.Application
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.room.Room
+import com.example.sleepwellapp.services.MotionDetectionService
+import com.example.sleepwellapp.services.ScheduleUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalTime
 import java.util.Calendar
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
-    private val db = Room.databaseBuilder(application, AppDatabase::class.java, "app-db").build()
-    private val dayTimeDao = db.dayTimeDao()
-    private val motionCountDao = db.motionCountDao()
+    private val nightTimeDao = AppDatabase.getInstance(application).nightTimeDao()
+    private val motionCountDao = AppDatabase.getInstance(application).motionCountDao()
+    private val userPreferences = UserPreferences(application, CryptoManager())
 
-    private val _dayTimes = MutableStateFlow<List<DayTimeEntity>>(emptyList())
-    val dayTimes: StateFlow<List<DayTimeEntity>> = _dayTimes
-
-    private val cryptoManager = CryptoManager()
-    private val userPreferences = UserPreferences(application, cryptoManager)
+    private val _nightTimes = MutableStateFlow<List<NightTimeEntity>>(emptyList())
+    val nightTimes: StateFlow<List<NightTimeEntity>> = _nightTimes
 
     private val _isDarkMode = MutableStateFlow(false)
     val isDarkMode: StateFlow<Boolean> = _isDarkMode
@@ -39,7 +37,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val password = userPreferences.passwordFlow.first()
             _isLoggedIn.value = username != null && password != null
             _isDarkMode.value = userPreferences.darkModeFlow.first()
-            loadDayTimes()
+            loadNightTimes()
+            withContext(Dispatchers.Main) {
+                ScheduleUtil.scheduleNightlyNotifications(application)
+            }
         }
     }
 
@@ -55,50 +56,83 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             userPreferences.saveCredentials(username, password)
             _isLoggedIn.value = true
-            initializeDays()
+            initializeNights()
         }
     }
 
-    private fun initializeDays() {
+    private fun initializeNights() {
         viewModelScope.launch {
-            val daysOfWeek = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+            val daysOfWeek = DayOfWeek.entries.map { it.name }
             withContext(Dispatchers.IO) {
-                daysOfWeek.forEach { day ->
-                    if (dayTimeDao.getByDay(day) == null) {
-                        dayTimeDao.insert(DayTimeEntity(day = day, wakeUpTime = "07:00", sleepTime = "22:00"))
+                daysOfWeek.forEachIndexed { index, startDay ->
+                    val endDay = daysOfWeek[(index + 1) % daysOfWeek.size]
+                    if (nightTimeDao.getByStartDay(startDay) == null) {
+                        nightTimeDao.insert(NightTimeEntity(startDay = startDay, endDay = endDay, sleepTime = "22:00", wakeUpTime = "07:00", enabled = true))
                     }
                 }
             }
-            loadDayTimes()
+            loadNightTimes()
         }
     }
 
-    private fun loadDayTimes() {
+    fun loadNightTimes() {
         viewModelScope.launch {
-            _dayTimes.value = withContext(Dispatchers.IO) { dayTimeDao.getAll() }
+            _nightTimes.value = withContext(Dispatchers.IO) { nightTimeDao.getAll() }
         }
     }
 
-    fun updateDayTime(dayTime: DayTimeEntity) {
+    fun updateNightTime(nightTime: NightTimeEntity) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) { dayTimeDao.update(dayTime) }
-            loadDayTimes()
+            withContext(Dispatchers.IO) { nightTimeDao.update(nightTime) }
+            loadNightTimes()
+            // Check if service should be started or stopped immediately
+            handleServiceUpdate(nightTime)
+            withContext(Dispatchers.Main) {
+                ScheduleUtil.scheduleNightlyNotifications(getApplication())
+            }
         }
     }
 
-    fun addDayTime(day: String, wakeUpTime: String, sleepTime: String) {
+    private fun handleServiceUpdate(nightTime: NightTimeEntity) {
+        val currentDay = LocalDate.now().dayOfWeek.name
+        if (nightTime.startDay != currentDay && nightTime.endDay != currentDay) return
+
+        if (!nightTime.enabled) {
+            ScheduleUtil.stopServiceImmediately(getApplication())
+            return
+        }
+
+        val currentTime = LocalTime.now()
+        val sleepTime = LocalTime.parse(nightTime.sleepTime)
+        val wakeUpTime = LocalTime.parse(nightTime.wakeUpTime)
+
+        when {
+            currentTime.isAfter(sleepTime) || currentTime.isBefore(wakeUpTime) -> {
+                if (!MotionDetectionService.isRunning) {
+                    ScheduleUtil.startServiceImmediately(getApplication())
+                }
+            }
+            currentTime.isAfter(wakeUpTime) && currentTime.isBefore(sleepTime) -> {
+                if (MotionDetectionService.isRunning) {
+                    ScheduleUtil.stopServiceImmediately(getApplication())
+                }
+            }
+        }
+    }
+
+    fun addNightTime(startDay: String, endDay: String, sleepTime: String, wakeUpTime: String, enabled: Boolean) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                dayTimeDao.insert(DayTimeEntity(day = day, wakeUpTime = wakeUpTime, sleepTime = sleepTime))
+                nightTimeDao.insert(NightTimeEntity(startDay = startDay, endDay = endDay, sleepTime = sleepTime, wakeUpTime = wakeUpTime, enabled = enabled))
             }
-            loadDayTimes()
+            loadNightTimes()
         }
     }
 
-    fun removeDayTime(dayTime: DayTimeEntity) {
+    fun removeNightTime(nightTime: NightTimeEntity) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) { dayTimeDao.delete(dayTime) }
-            loadDayTimes()
+            withContext(Dispatchers.IO) { nightTimeDao.delete(nightTime) }
+            loadNightTimes()
         }
     }
 
@@ -112,11 +146,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun clearAllData() {
         viewModelScope.launch {
             userPreferences.clearAllData()
-            withContext(Dispatchers.IO) { dayTimeDao.deleteAll() }
-            _dayTimes.value = emptyList()
+            withContext(Dispatchers.IO) { nightTimeDao.deleteAll() }
+            _nightTimes.value = emptyList()
         }
     }
-
 
     fun recordMotion(day: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -135,7 +168,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun cleanOldData() {
+    fun cleanOldData() {
         viewModelScope.launch(Dispatchers.IO) {
             val calendar = Calendar.getInstance()
             calendar.add(Calendar.DAY_OF_YEAR, -7)
