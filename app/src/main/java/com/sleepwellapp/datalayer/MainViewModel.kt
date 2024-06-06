@@ -152,7 +152,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun seedMotionData(){
         // seed the night times with some motion data
         val today = LocalDate.now().dayOfWeek.name
-        val yesterday = LocalDate.now().minusDays(1).dayOfWeek.name
+        val yesterday = LocalDate.now().minusDays(3).dayOfWeek.name
         val currentTs = System.currentTimeMillis()
 //        go back 4 hours
         val go_back_h = 4
