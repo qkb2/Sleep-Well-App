@@ -10,7 +10,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.room.Room
 import com.example.sleepwellapp.services.MotionDetectionService
 import com.example.sleepwellapp.services.ScheduleUtil
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +41,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val remoteDB: RemoteFirebaseDB = RemoteFirebaseDB()
 
 //    for remote db
-    val _remotedayTimes = MutableLiveData<List<RemoteDayTimeEntity>>()
+    val _remoteNightTimes = MutableLiveData<List<RemoteDayTimeEntity>>()
     val addSuccess = MutableLiveData<Boolean>()
     val deleteSuccess = MutableLiveData<Boolean>()
     val updateSuccess = MutableLiveData<Boolean>()
@@ -66,15 +65,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun forcePullRemoteDb(){
         if (!_isLoggedIn.value) {
+            Log.d("TAG", "force_pull_remote_db: not logged in")
             return
         }
 
         Log.d("TAG", "force_pull_remote_db: ")
         //pull from remote db
-        _remotedayTimes.value = remoteDB.fetchAllDayTimes()
+        _remoteNightTimes.value = remoteDB.fetchAllDayTimes()
         Log.d("TAG", "after loadRemoteDayTimes(: ")
         // check if remote is empty
-        if (_remotedayTimes.value.isNullOrEmpty()){
+        if (_remoteNightTimes.value.isNullOrEmpty()){
             // seed remote db
             Log.d("TAG", "force_pull_remote_db: seeding remote db")
             withContext(Dispatchers.IO) {
@@ -88,52 +88,59 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // sync local db
             withContext(Dispatchers.IO) {
                 nightTimeDao.deleteAll()
-                _remotedayTimes.value!!.forEach {
+                _remoteNightTimes.value!!.forEach {
                     nightTimeDao.insert(toLocalDbFormat(it))
                     }
             }
         }
+        // sync the data
+        _remoteNightTimes.value = remoteDB.fetchAllDayTimes()
     }
 
-    private suspend fun syncPushRemoteDB(){
-        Log.d("TAG", "syncPushRemoteDB: ")
-        if (!_isLoggedIn.value){
-            return
-        }
-        //pull from remote db
-        _remotedayTimes.value = remoteDB.fetchAllDayTimes()
-        // check if remote is empty
-//        check which elements are in local db but not in remote db
-        val localDb = _nightTimes.value
-        val remoteDb = _remotedayTimes.value
-        val localDbIds = localDb.map { it.id }
-        val remoteDbIds = remoteDb!!.map { it.id }
-        val toAdd = localDb.filter { !remoteDbIds.contains(it.id) }
-        val toDelete = remoteDb.filter { !localDbIds.contains(it.id) }
-        val toUpdate = localDb.filter { remoteDbIds.contains(it.id) }
-
-        toAdd.forEach {
-            remoteDB.addDayTime(toRemoteDbFormat(it, repository.getUserId()))
-        }
-
-        toDelete.forEach {
-            remoteDB.deleteDayTime(it.documentId)
-        }
-
-        toUpdate.forEach { localDayTimeEntity ->
-            val remoteDaytime = remoteDb.find {
-                it.id == localDayTimeEntity.id
-            }
-            if (remoteDaytime != null) {
-                //update remote db
-                remoteDB.updateDayTime(
-                    remoteDaytime.documentId,
-                    toRemoteDbFormat(localDayTimeEntity, repository.getUserId()))
-            }
-        }
-
-
-    }
+//    private suspend fun syncPushRemoteDB(){
+//        Log.d("TAG", "syncPushRemoteDB: ")
+//        if (!_isLoggedIn.value){
+//            return
+//        }
+//        //pull from remote db
+//        _remoteNightTimes.value = remoteDB.fetchAllDayTimes()
+//        // check if remote is empty
+////        check which elements are in local db but not in remote db
+//        val localDb = _nightTimes.value
+//        val remoteDb = _remoteNightTimes.value
+//        val localDbIds = localDb.map { it.id }
+//        val remoteDbIds = remoteDb!!.map { it.id }
+//        val toAdd = localDb.filter { !remoteDbIds.contains(it.id) }
+//        val toDelete = remoteDb.filter { !localDbIds.contains(it.id) }
+//        val toUpdate = localDb.filter { remoteDbIds.contains(it.id) }
+//
+//        toAdd.forEach {
+//            remoteDB.addDayTime(toRemoteDbFormat(it, repository.getUserId()))
+//        }
+//
+//        toDelete.forEach {
+//            remoteDB.deleteDayTime(it.documentId)
+//        }
+//
+//        toUpdate.forEach { localDayTimeEntity ->
+//            val remoteDaytime = remoteDb.find {
+//                it.id == localDayTimeEntity.id
+//            }
+//            if (remoteDaytime != null) {
+//                //update remote db
+//                remoteDB.updateDayTime(
+//                    remoteDaytime.documentId,
+//                    toRemoteDbFormat(localDayTimeEntity, repository.getUserId()))
+//            }
+//        }
+//
+//        // sync the data
+//        withContext(Dispatchers.IO){
+//            _remoteNightTimes.value = remoteDB.fetchAllDayTimes()
+//        }
+//
+//
+//    }
 
     fun toggleDarkMode() {
         viewModelScope.launch {
@@ -193,6 +200,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 ScheduleUtil.scheduleNightlyNotifications(getApplication())
             }
         }
+        Log.d("TAG", "updateNightTime: ")
+        // get the RemoteDayTimeEntity with the same id
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val remoteNightTime  = _remoteNightTimes.value!!.find { it.id == nightTime.id }
+                if (remoteNightTime != null) {
+                    //update remote db
+                    Log.d("TAG", "updateNightTime: updating remote db")
+                    remoteDB.updateDayTime(
+                        remoteNightTime.documentId,
+                        toRemoteDbFormat(nightTime, repository.getUserId())
+                    )
+                } else {
+                    Log.d("TAG", "updateNightTime: missing remote elem")
+                }
+            }
+
+            _remoteNightTimes.value = _remoteNightTimes.value!!.map {
+                if (it.id == nightTime.id) {
+                    toRemoteDbFormat(nightTime, repository.getUserId())
+                } else {
+                    it
+                }
+            }
+        }
     }
 
     private fun handleServiceUpdate(nightTime: NightTimeEntity) {
@@ -220,11 +252,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
-
-        // get the RemoteDayTimeEntity with the same id
-        viewModelScope.launch {
-            syncPushRemoteDB()
-        }
     }
 
     fun addNightTime(startDay: String, endDay: String, sleepTime: String, wakeUpTime: String, enabled: Boolean) {
@@ -234,10 +261,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             loadNightTimes()
         }
-
+        // get last element or is there another way to get the id ??
+        val last = _nightTimes.value.last()
+        val nightTime = toRemoteDbFormat(last, repository.getUserId() )
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                syncPushRemoteDB()
+            val remote = withContext(Dispatchers.IO) {
+                remoteDB.addDayTime( nightTime )
+            }
+            if (remote != null) {
+                _remoteNightTimes.value =
+                    _remoteNightTimes.value!!.plus(remote)
             }
         }
 
@@ -251,9 +284,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         // get the RemoteDayTimeEntity with the same id
         viewModelScope.launch {
+            val remoteNightTime  = _remoteNightTimes.value!!.find { it.id == nightTime.id }
             withContext(Dispatchers.IO) {
-                syncPushRemoteDB()
+                if (remoteNightTime != null) {
+                    //update remote db
+                    remoteDB.deleteDayTime(remoteNightTime.documentId)
+                }
             }
+            _remoteNightTimes.value = _remoteNightTimes.value!!.filter { it.id != nightTime.id }
         }
     }
 
@@ -274,7 +312,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                syncPushRemoteDB()
+                for (remoteNightTime in _remoteNightTimes.value!!) {
+                    remoteDB.deleteDayTime(remoteNightTime.documentId)
+                }
             }
         }
     }

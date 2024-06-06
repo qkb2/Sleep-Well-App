@@ -12,11 +12,11 @@ data class RemoteDayTimeEntity(
     val userId: String = "",
     val id: Int = 0,
     var documentId: String = "",
-    val startDay: String,
-    val endDay: String,
-    val sleepTime: String,
-    val wakeUpTime: String,
-    val enabled: Boolean
+    val startDay: String = "",
+    val endDay: String = "",
+    val sleepTime: String = "",
+    val wakeUpTime: String = "",
+    val enabled: Boolean = false
 )
 
 fun toLocalDbFormat(remoteDayTimeEntity: RemoteDayTimeEntity): NightTimeEntity {
@@ -70,7 +70,7 @@ class RemoteFirebaseDB {
         }
     }
 
-    suspend fun addDayTime(dayTime: RemoteDayTimeEntity): Boolean {
+    suspend fun addDayTime(dayTime: RemoteDayTimeEntity): RemoteDayTimeEntity? {
         val userId = dayTime.userId
         val dayTimeWithUserId = dayTime.copy(userId = userId)
         return try {
@@ -85,10 +85,10 @@ class RemoteFirebaseDB {
                 }
 
             Log.d("TAG", "addDayTime: added dayTime")
-            true
+            dayTime
         } catch (e: Exception) {
             Log.d("TAG", "addDayTime: ${e.message}")
-            false
+            null
         }
     }
 
