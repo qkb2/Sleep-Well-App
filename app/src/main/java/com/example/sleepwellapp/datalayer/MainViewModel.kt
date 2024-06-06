@@ -79,7 +79,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             Log.d("TAG", "force_pull_remote_db: seeding remote db")
             withContext(Dispatchers.IO) {
                 _nightTimes.value.forEach {
-                    Log.d("ADD", "Adding ${it.day}")
+                    Log.d("ADD", "Adding ${it.startDay}")
                     remoteDB.addDayTime(toRemoteDbFormat(it, repository.getUserId()))
                 }
             }
@@ -87,9 +87,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             Log.d("TAG", "force_pull_remote_db: remote db is not empty")
             // sync local db
             withContext(Dispatchers.IO) {
-                dayTimeDao.deleteAll()
+                nightTimeDao.deleteAll()
                 _remotedayTimes.value!!.forEach {
-                        dayTimeDao.insert(toLocalDbFormat(it))
+                    nightTimeDao.insert(toLocalDbFormat(it))
                     }
             }
         }
@@ -157,9 +157,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 //        this means login, so we need to seed the remote db
 //        TODO this might be bad code
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                forcePullRemoteDb()
-            }
+            forcePullRemoteDb()
         }
 
     }
