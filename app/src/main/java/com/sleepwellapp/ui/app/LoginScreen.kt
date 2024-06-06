@@ -1,4 +1,4 @@
-package com.example.sleepwellapp.ui.app
+package com.sleepwellapp.ui.app
 
 import android.content.Context
 import androidx.compose.animation.core.LinearEasing
@@ -48,8 +48,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.sleepwellapp.R
-import com.example.sleepwellapp.datalayer.MainViewModel
+import com.sleepwellapp.R
+import com.sleepwellapp.datalayer.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

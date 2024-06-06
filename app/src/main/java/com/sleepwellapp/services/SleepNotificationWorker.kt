@@ -1,4 +1,4 @@
-package com.example.sleepwellapp.services
+package com.sleepwellapp.services
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -12,7 +12,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.example.sleepwellapp.R
+import com.sleepwellapp.R
 
 class SleepNotificationWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {

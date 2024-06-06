@@ -1,4 +1,4 @@
-package com.example.sleepwellapp.ui.app
+package com.sleepwellapp.ui.app
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
@@ -27,7 +27,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.sleepwellapp.datalayer.MainViewModel
+import com.sleepwellapp.datalayer.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

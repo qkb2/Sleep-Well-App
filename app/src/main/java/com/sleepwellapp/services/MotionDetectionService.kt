@@ -1,4 +1,4 @@
-package com.example.sleepwellapp.services
+package com.sleepwellapp.services
 
 import android.Manifest
 import android.Manifest.permission.FOREGROUND_SERVICE_HEALTH
@@ -22,8 +22,8 @@ import androidx.core.app.JobIntentService
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LifecycleService
-import com.example.sleepwellapp.R
-import com.example.sleepwellapp.datalayer.MainViewModel
+import com.sleepwellapp.R
+import com.sleepwellapp.datalayer.MainViewModel
 import java.util.Calendar
 import java.util.Locale
 

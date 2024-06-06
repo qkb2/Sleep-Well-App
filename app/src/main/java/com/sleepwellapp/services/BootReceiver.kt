@@ -1,4 +1,4 @@
-package com.example.sleepwellapp.services
+package com.sleepwellapp.services
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -10,7 +10,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.example.sleepwellapp.datalayer.AppDatabase
+import com.sleepwellapp.datalayer.AppDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,22 +49,22 @@ object ScheduleUtil {
                         // Schedule sleep notification
                         val sleepWorkRequest = OneTimeWorkRequestBuilder<SleepNotificationWorker>()
                             .setInitialDelay(calculateDelayUntilNext(startDay, LocalTime.parse(nightTime.sleepTime)), TimeUnit.MILLISECONDS)
-                            .addTag("${WORKER_TAG_PREFIX}${startDay.name}_sleep")
+                            .addTag("$WORKER_TAG_PREFIX${startDay.name}_sleep")
                             .build()
 
                         // Schedule wake-up notification
                         val endDay = DayOfWeek.valueOf(nightTime.endDay)
                         val wakeWorkRequest = OneTimeWorkRequestBuilder<WakeNotificationWorker>()
                             .setInitialDelay(calculateDelayUntilNext(endDay, LocalTime.parse(nightTime.wakeUpTime)), TimeUnit.MILLISECONDS)
-                            .addTag("${WORKER_TAG_PREFIX}${endDay.name}_wake")
+                            .addTag("$WORKER_TAG_PREFIX${endDay.name}_wake")
                             .build()
 
-                        workManager.enqueueUniqueWork("${WORKER_TAG_PREFIX}${startDay.name}_sleep", ExistingWorkPolicy.REPLACE, sleepWorkRequest)
-                        workManager.enqueueUniqueWork("${WORKER_TAG_PREFIX}${endDay.name}_wake", ExistingWorkPolicy.REPLACE, wakeWorkRequest)
+                        workManager.enqueueUniqueWork("$WORKER_TAG_PREFIX${startDay.name}_sleep", ExistingWorkPolicy.REPLACE, sleepWorkRequest)
+                        workManager.enqueueUniqueWork("$WORKER_TAG_PREFIX${endDay.name}_wake", ExistingWorkPolicy.REPLACE, wakeWorkRequest)
                     } else {
                         // Cancel existing workers for this day
-                        workManager.cancelAllWorkByTag("${WORKER_TAG_PREFIX}${startDay.name}_sleep")
-                        workManager.cancelAllWorkByTag("${WORKER_TAG_PREFIX}${nightTime.endDay}_wake")
+                        workManager.cancelAllWorkByTag("$WORKER_TAG_PREFIX${startDay.name}_sleep")
+                        workManager.cancelAllWorkByTag("$WORKER_TAG_PREFIX${nightTime.endDay}_wake")
                     }
                 }
             }

@@ -1,4 +1,4 @@
-package com.example.sleepwellapp.ui.app
+package com.sleepwellapp.ui.app
 
 import android.app.TimePickerDialog
 import androidx.compose.foundation.layout.Arrangement
@@ -24,8 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.sleepwellapp.datalayer.MainViewModel
-import com.example.sleepwellapp.datalayer.NightTimeEntity
+import com.sleepwellapp.datalayer.MainViewModel
+import com.sleepwellapp.datalayer.NightTimeEntity
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 

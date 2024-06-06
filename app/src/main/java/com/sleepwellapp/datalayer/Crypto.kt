@@ -1,4 +1,4 @@
-package com.example.sleepwellapp.datalayer
+package com.sleepwellapp.datalayer
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties

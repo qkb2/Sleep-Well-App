@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.sleepwellapp"
+    namespace = "com.sleepwellapp"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.sleepwellapp"
+        applicationId = "com.sleepwellapp"
         minSdk = 26
         targetSdk = 34
         versionCode = 1

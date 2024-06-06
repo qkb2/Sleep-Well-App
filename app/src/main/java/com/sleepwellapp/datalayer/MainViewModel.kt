@@ -1,4 +1,4 @@
-package com.example.sleepwellapp.datalayer
+package com.sleepwellapp.datalayer
 
 import android.app.Application
 import android.content.Context
@@ -10,8 +10,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.example.sleepwellapp.services.MotionDetectionService
-import com.example.sleepwellapp.services.ScheduleUtil
+import com.sleepwellapp.services.MotionDetectionService
+import com.sleepwellapp.services.ScheduleUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

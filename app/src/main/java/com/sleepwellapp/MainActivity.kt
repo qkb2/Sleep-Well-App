@@ -1,4 +1,4 @@
-package com.example.sleepwellapp
+package com.sleepwellapp
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -6,10 +6,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.sleepwellapp.datalayer.MainViewModel
-import com.example.sleepwellapp.ui.app.LoginScreen
-import com.example.sleepwellapp.ui.app.MainScreen
-import com.example.sleepwellapp.ui.theme.SleepWellAppTheme
+import com.sleepwellapp.datalayer.MainViewModel
+import com.sleepwellapp.ui.app.LoginScreen
+import com.sleepwellapp.ui.app.MainScreen
+import com.sleepwellapp.ui.theme.SleepWellAppTheme
 
 class MainActivity : ComponentActivity() {
 

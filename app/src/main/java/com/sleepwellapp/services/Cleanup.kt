@@ -1,4 +1,4 @@
-package com.example.sleepwellapp.services
+package com.sleepwellapp.services
 
 import android.content.Context
 import androidx.room.Room
@@ -7,7 +7,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.example.sleepwellapp.datalayer.AppDatabase
+import com.sleepwellapp.datalayer.AppDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

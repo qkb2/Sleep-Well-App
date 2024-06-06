@@ -1,4 +1,4 @@
-package com.example.sleepwellapp.services
+package com.sleepwellapp.services
 
 import android.app.Application
 import android.content.Context
@@ -10,9 +10,9 @@ import android.hardware.SensorManager
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.example.sleepwellapp.datalayer.AppDatabase
-import com.example.sleepwellapp.datalayer.MainViewModel
-import com.example.sleepwellapp.datalayer.MotionCount
+import com.sleepwellapp.datalayer.AppDatabase
+import com.sleepwellapp.datalayer.MainViewModel
+import com.sleepwellapp.datalayer.MotionCount
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext

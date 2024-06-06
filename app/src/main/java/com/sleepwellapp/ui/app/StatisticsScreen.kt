@@ -1,4 +1,4 @@
-package com.example.sleepwellapp.ui.app
+package com.sleepwellapp.ui.app
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
@@ -19,8 +19,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.sleepwellapp.datalayer.MainViewModel
-import com.example.sleepwellapp.datalayer.MotionCount
+import com.sleepwellapp.datalayer.MainViewModel
+import com.sleepwellapp.datalayer.MotionCount
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.Alignment
 

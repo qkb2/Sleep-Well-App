@@ -1,4 +1,4 @@
-package com.example.sleepwellapp.ui.theme
+package com.sleepwellapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
