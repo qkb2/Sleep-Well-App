@@ -21,6 +21,7 @@ import kotlinx.coroutines.withContext
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneOffset
 import java.util.Calendar
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -30,6 +31,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _nightTimes = MutableStateFlow<List<NightTimeEntity>>(emptyList())
     val nightTimes: StateFlow<List<NightTimeEntity>> = _nightTimes
+
+    private val _motionCounts = MutableStateFlow<List<MotionCount>>(emptyList())
+    val motionCounts: StateFlow<List<MotionCount>> = _motionCounts
+
 
     private val _isDarkMode = MutableStateFlow(false)
     val isDarkMode: StateFlow<Boolean> = _isDarkMode
@@ -60,6 +65,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
 //            load local db
             forcePullRemoteDb()
+            seedMotionData()
+//            this is only for testing
+            if (_motionCounts.value.isEmpty()){
+                loadMotionCounts()
+            }
         }
     }
 
@@ -96,51 +106,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // sync the data
         _remoteNightTimes.value = remoteDB.fetchAllDayTimes()
     }
-
-//    private suspend fun syncPushRemoteDB(){
-//        Log.d("TAG", "syncPushRemoteDB: ")
-//        if (!_isLoggedIn.value){
-//            return
-//        }
-//        //pull from remote db
-//        _remoteNightTimes.value = remoteDB.fetchAllDayTimes()
-//        // check if remote is empty
-////        check which elements are in local db but not in remote db
-//        val localDb = _nightTimes.value
-//        val remoteDb = _remoteNightTimes.value
-//        val localDbIds = localDb.map { it.id }
-//        val remoteDbIds = remoteDb!!.map { it.id }
-//        val toAdd = localDb.filter { !remoteDbIds.contains(it.id) }
-//        val toDelete = remoteDb.filter { !localDbIds.contains(it.id) }
-//        val toUpdate = localDb.filter { remoteDbIds.contains(it.id) }
-//
-//        toAdd.forEach {
-//            remoteDB.addDayTime(toRemoteDbFormat(it, repository.getUserId()))
-//        }
-//
-//        toDelete.forEach {
-//            remoteDB.deleteDayTime(it.documentId)
-//        }
-//
-//        toUpdate.forEach { localDayTimeEntity ->
-//            val remoteDaytime = remoteDb.find {
-//                it.id == localDayTimeEntity.id
-//            }
-//            if (remoteDaytime != null) {
-//                //update remote db
-//                remoteDB.updateDayTime(
-//                    remoteDaytime.documentId,
-//                    toRemoteDbFormat(localDayTimeEntity, repository.getUserId()))
-//            }
-//        }
-//
-//        // sync the data
-//        withContext(Dispatchers.IO){
-//            _remoteNightTimes.value = remoteDB.fetchAllDayTimes()
-//        }
-//
-//
-//    }
 
     fun toggleDarkMode() {
         viewModelScope.launch {
@@ -184,9 +149,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    suspend fun seedMotionData(){
+        // seed the night times with some motion data
+        val today = LocalDate.now().dayOfWeek.name
+        val yesterday = LocalDate.now().minusDays(1).dayOfWeek.name
+        val currentTs = System.currentTimeMillis()
+//        go back 4 hours
+        val go_back_h = 4
+        val backTs = currentTs - go_back_h * 60 * 60 * 1000
+        withContext(Dispatchers.IO) {
+            for (i in 0..5) {
+                motionCountDao.insert(MotionCount(day = yesterday, count = 1, timestamp = backTs + i * 15 * 60 * 1000))
+            }
+        }
+    }
+
     fun loadNightTimes() {
         viewModelScope.launch {
             _nightTimes.value = withContext(Dispatchers.IO) { nightTimeDao.getAll() }
+        }
+    }
+    fun loadMotionCounts() {
+        viewModelScope.launch {
+            _motionCounts.value = withContext(Dispatchers.IO) { motionCountDao.getAll() }
         }
     }
 
@@ -318,15 +303,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+    private fun sToLong(s: String): Long {
+        // Implement your conversion logic here, assuming the format is "HH:mm"
+        Log.d("TAG", "StoLong: $s")
+        val parts = s.split(":")
+        val hours = parts[0].toLong()
+        val minutes = parts[1].toLong()
+        return hours * 3600 + minutes * 60
+    }
+    fun getActiveNightTimes(): List<NightTimeEntity> {
+        val currentDay = LocalDate.now().dayOfWeek.name
+        val nextDay = LocalDate.now().plusDays(1).dayOfWeek.name
+        val currsec = LocalTime.now().toSecondOfDay()
+        val before_mid =  _nightTimes.value.filter {
+            (it.startDay == currentDay && sToLong(it.sleepTime) < currsec
+                    && (it.endDay == currentDay && sToLong(it.wakeUpTime) > currsec) || it.endDay == nextDay)
+        }
+        val after_mid =  _nightTimes.value.filter {
+            (it.endDay == currentDay && sToLong(it.wakeUpTime) < currsec)
+        }
 
+        return before_mid + after_mid
+    }
     fun recordMotion(day: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val lastCount = motionCountDao.getLastCountForDay(day)
-            if (lastCount != null) {
-                motionCountDao.updateCount(lastCount.id, lastCount.count + 1)
-            } else {
-                motionCountDao.insert(MotionCount(day = day, count = 1))
-            }
+                val nightTime = getActiveNightTimes()[0]
+                motionCountDao.insert(MotionCount(day = nightTime.startDay, count = 1))
         }
     }
 
@@ -345,8 +347,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+//    ++++ Statictis ++++
 
-//    +++++ LOG IN STUFF +++++
+    fun getAverageSleepLength(): Double {
+        val totalSleepTime = _nightTimes.value.sumOf { sToLong(it.sleepTime) - sToLong(it.wakeUpTime) }
+        return if (_nightTimes.value.isNotEmpty()) totalSleepTime / _nightTimes.value.size.toDouble() else 0.0
+    }
+
+    fun getMotionCountsForDay(day: String): List<MotionCount> {
+        return _motionCounts.value.filter { it.day == day }
+    }
+
+
+
+    //    +++++ LOG IN STUFF +++++
     val currentUser = repository.currentUser
     val hasUser: Boolean
         get() = repository.hasUser()

@@ -55,8 +55,13 @@ data class MotionCount(
 
 @Dao
 interface MotionCountDao {
+    @Query("SELECT * FROM motion_count")
+    fun getAll(): List<MotionCount>
     @Query("SELECT * FROM motion_count WHERE day = :day ORDER BY timestamp DESC LIMIT 1")
     fun getLastCountForDay(day: String): MotionCount?
+
+    @Query("SELECT * FROM motion_count WHERE day = :day ORDER BY timestamp")
+    fun getAllForDay(day: String): List<MotionCount>
 
     @Insert
     fun insert(motionCount: MotionCount)
