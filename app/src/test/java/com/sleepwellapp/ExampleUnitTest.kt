@@ -1,4 +1,4 @@
-package com.example.sleepwellapp
+package com.sleepwellapp
 
 import org.junit.Test
 
